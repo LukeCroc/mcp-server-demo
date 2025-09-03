@@ -1,0 +1,13 @@
+{
+  "status": "pending",
+  "job": {
+    "id": "262644b4-201a-462b-bcf8-a1dbe35559cb",
+    "command": "echo 'Hello World151' && ls -la",
+    "directory": "."
+  },
+  "result": {
+    "stdout": null,
+    "stderr": null,
+    "return_code": null
+  }
+}
