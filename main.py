@@ -70,50 +70,50 @@ def remote_test(project_root: str, command: str) -> Dict[str, Any]:
             subprocess.run("git add remote_job.json", shell=True, check=True)
             subprocess.run(f'git commit -m "Add remote test job {job_id}"', shell=True, check=True)
             
-            # Git push with better error handling - don't use capture_output
-            # to allow interactive authentication if needed
+            # Run git push synchronously for debugging
             try:
                 result = subprocess.run("git push origin main", shell=True, check=True, capture_output=True, text=True, timeout=30)
                 print(f"✅ Job {job_id} committed and pushed to GitHub")
+                print(f"git push stdout: {result.stdout}")
+                print(f"git push stderr: {result.stderr}")
             except subprocess.CalledProcessError as e:
                 print(f"⚠️  git push failed: {e}")
-                if e.stderr:
-                    print(f"Error details: {e.stderr}")
-                print("Continuing with polling despite git push failure")
+                print(f"git push stdout: {e.stdout}")
+                print(f"git push stderr: {e.stderr}")
+                # Re-raise to see detailed error
+                raise
             except subprocess.TimeoutExpired:
                 print("⚠️  git push timed out after 30 seconds")
-                print("Continuing with polling despite timeout")
+                raise
+            except Exception as e:
+                print(f"⚠️  git push unexpected error: {e}")
+                raise
             
             # Restore original working directory
             os.chdir(original_cwd)
             
         except subprocess.CalledProcessError as e:
             print(f"Git operations failed: {e}")
-            # Continue with polling even if git operations fail
+            return {
+                "job_id": job_id,
+                "status": "git_error",
+                "error": f"Git operation failed: {str(e)}",
+                "stdout": e.stdout,
+                "stderr": e.stderr
+            }
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            return {
+                "job_id": job_id,
+                "status": "error",
+                "error": f"Unexpected error: {str(e)}"
+            }
         
-        # Wait for job completion (polling)
-        max_attempts = 60  # 5 minutes at 5 second intervals
-        for attempt in range(max_attempts):
-            time.sleep(5)  # Wait 5 seconds between checks
-            
-            try:
-                with open(job_file_path, 'r') as f:
-                    current_data = json.load(f)
-                
-                if current_data.get("status") == "completed":
-                    return {
-                        "job_id": job_id,
-                        "status": "completed",
-                        "result": current_data["result"]
-                    }
-                    
-            except (FileNotFoundError, json.JSONDecodeError):
-                continue
-        
+        # Return success
         return {
             "job_id": job_id,
-            "status": "timeout",
-            "error": "Job timed out after 5 minutes"
+            "status": "success",
+            "message": f"Job {job_id} created, committed, and pushed successfully"
         }
         
     except Exception as e:
