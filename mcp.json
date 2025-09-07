@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "RemoteTesting": {
+      "name": "RemoteTesting",
+      "type": "stdio",
+      "description": "Test Script on Remote Server.",
+      "isActive": true,
+      "registryUrl": "",
+      "tags": [],
+      "command": "uv",
+      "args": [
+        "--directory",
+        "C:\\Projects\\MCP\\mcp-server-demo",
+        "run",
+        "main.py"
+      ],
+      "alwaysAllow": [
+        "add",
+        "remote_test"
+      ],
+      "timeout": 300
+    }
+  }
+}
